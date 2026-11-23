@@ -15,7 +15,10 @@ import httpx
 
 class ChatClient(Protocol):
     def chat(
-        self, messages: list[dict], tools: list[dict] | None = None
+        self,
+        messages: list[dict],
+        tools: list[dict] | None = None,
+        json_mode: bool = False,
     ) -> dict:
         """Return the assistant message dict: {content, tool_calls?}."""
         ...
@@ -35,9 +38,13 @@ class OpenAICompatClient:
         self.api_key = api_key or os.environ.get("MTQA_API_KEY", "")
         self.timeout = timeout
         self.temperature = temperature
+        self._json_mode_supported = True
 
     def chat(
-        self, messages: list[dict], tools: list[dict] | None = None
+        self,
+        messages: list[dict],
+        tools: list[dict] | None = None,
+        json_mode: bool = False,
     ) -> dict:
         payload: dict[str, Any] = {
             "model": self.model,
@@ -46,12 +53,22 @@ class OpenAICompatClient:
         }
         if tools:
             payload["tools"] = tools
+        use_json = json_mode and self._json_mode_supported
+        if use_json:
+            payload["response_format"] = {"type": "json_object"}
         headers = {}
         if self.api_key:
             headers["Authorization"] = f"Bearer {self.api_key}"
         response = httpx.post(
             f"{self.base_url}/chat/completions", json=payload, headers=headers, timeout=self.timeout
         )
+        if response.status_code >= 400 and use_json:
+            # endpoint rejects response_format: drop it once and retry plain
+            self._json_mode_supported = False
+            payload.pop("response_format")
+            response = httpx.post(
+                f"{self.base_url}/chat/completions", json=payload, headers=headers, timeout=self.timeout
+            )
         response.raise_for_status()
         return response.json()["choices"][0]["message"]
 
@@ -68,11 +85,16 @@ class FakeClient:
         self.calls: list[dict] = []
 
     def chat(
-        self, messages: list[dict], tools: list[dict] | None = None
+        self,
+        messages: list[dict],
+        tools: list[dict] | None = None,
+        json_mode: bool = False,
     ) -> dict:
         import copy
 
-        self.calls.append({"messages": copy.deepcopy(messages), "tools": tools})
+        self.calls.append(
+            {"messages": copy.deepcopy(messages), "tools": tools, "json_mode": json_mode}
+        )
         if not self._responses:
             raise AssertionError("FakeClient ran out of scripted responses")
         item = self._responses.pop(0)

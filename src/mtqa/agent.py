@@ -137,6 +137,13 @@ def user_payload(segment: Segment, variant: str) -> dict:
     }
     if variant == "B":
         payload["tool_results"] = run_tools(segment)
+    elif variant == "C":
+        # Pre-filter: a 0.6B-class model declines ~half of needed tool calls
+        # (probe_tools.py, 2026-11), but this check is free, so run it up front
+        # and hand over any non-empty result instead of hoping for a call.
+        hits = checks.check_placeholders(segment.source, segment.mt)
+        if hits:
+            payload["tool_results"] = {"check_placeholders": hits}
     return payload
 
 
@@ -220,8 +227,13 @@ def _collect_reply(
     segment: Segment,
     drafts: list[str] | None = None,
 ) -> AgentReport:
-    """One model turn, including at most one round of tool calls."""
-    reply = client.chat(messages, tools)
+    """One model turn, including at most one round of tool calls.
+
+    `json_mode` is requested whenever the expected reply is the final JSON
+    report, so compliant endpoints constrain decoding. The tool round itself
+    runs without it (tools + response_format is unsupported on some servers).
+    """
+    reply = client.chat(messages, tools, json_mode=tools is None)
     if tools and reply.get("tool_calls"):
         messages.append({"role": "assistant", **{k: v for k, v in reply.items() if k != "role"}})
         for call in reply["tool_calls"]:
@@ -238,7 +250,8 @@ def _collect_reply(
                     "content": json.dumps(result, ensure_ascii=False, default=str),
                 }
             )
-        reply = client.chat(messages, tools)
+        # tools have run; the rest is pure JSON generation, constrain it
+        reply = client.chat(messages, None, json_mode=True)
     content = reply.get("content") or ""
     if drafts is not None and content:
         drafts.append(content)

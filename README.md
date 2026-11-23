@@ -34,9 +34,10 @@ Segment ──► system prompt + few-shots (+ tool results or tool defs)
 - **Variants** — A: LLM only; B: tools run first, results placed in the
   prompt (fixed pipeline); C: the LLM decides which tools to call (agent).
 - **Eval** — 40 hand-labelled enterprise-software segments (10 held out),
-  category-level P/R/F1, severity agreement within one level, JSON validity
-  rate before retries, score MAE, latency. Runs logged to MLflow with the
-  predictions file as artifact.
+  category-level P/R/F1 (headline) and a stricter span-overlap F1, severity
+  agreement within one level, JSON validity rate before retries (with
+  `response_format=json_object` where the endpoint supports it), score MAE,
+  latency. Runs logged to MLflow with the predictions file as artifact.
 
 ## Quickstart
 
@@ -44,20 +45,23 @@ Segment ──► system prompt + few-shots (+ tool results or tool defs)
 pip install -e ".[dev]"
 pytest
 
-# point at any OpenAI-compatible endpoint
-export MTQA_BASE_URL=http://localhost:13305/v1 MTQA_MODEL=your-model
+# endpoint config: mtqa.toml, overridden by MTQA_BASE_URL / MTQA_MODEL env vars
+# (API keys only via MTQA_API_KEY, never the file)
 pip install -e ".[eval]"
-python eval/run_eval.py --variants A,B,C --tracking-uri ./mlruns
+python eval/run_eval.py --variants A,B,C --workers 4
 ```
 
 `scripts/probe_tools.py` checks whether an endpoint does reliable tool calling
-before you trust variant C.
+before you trust variant C. The probe on Qwen3-0.6B showed the model declines
+~50% of needed tool calls when left to decide, so variant C pre-runs the free
+placeholder check and hands the result over; the model still chooses the other
+two tools.
 
 ## Results
 
 _To be filled after the A/B/C runs (see `eval/run_eval.py`)._
 
-| Variant | F1 | Severity agree | Valid JSON | Score MAE | Latency |
+| Variant | F1 | Strict F1 | Severity agree | Valid JSON | Score MAE | Latency |
 | --- | --- | --- | --- | --- | --- |
 | A (LLM only) | | | | | |
 | B (pipeline) | | | | | |
@@ -76,12 +80,13 @@ _To be filled after the A/B/C runs (see `eval/run_eval.py`)._
 ## Layout
 
 ```
-src/mtqa/        schemas, tools, scoring, llm (client + fake), agent loop
+src/mtqa/        schemas, tools, scoring, metrics, config, llm (client + fake), agent loop
 src/mtqa/prompts/  system.md (3 sections, versioned), few_shot.json
 data/            glossary.csv, eval.jsonl (40 segments, 10 hold-out)
-eval/run_eval.py  variants A/B/C, metrics, MLflow
+mtqa.toml        endpoint/experiment config (no secrets)
+eval/run_eval.py  variants A/B/C, threads, metrics, MLflow
 scripts/         endpoint tool-calling probe
-tests/           tools, scoring, agent (fake client), prompts, data
+tests/           tools, scoring, metrics, config, agent (fake client), prompts, data
 ```
 
 Design rationale and week plan: `docs/project-design.md`.

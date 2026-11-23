@@ -80,3 +80,33 @@ def test_variant_b_prompt_has_tool_results():
     review(SEGMENT, client, variant="B")
     user = client.calls[0]["messages"][-1]["content"]
     assert "tool_results" in user
+
+
+def test_variant_c_prefills_placeholder_results():
+    client = FakeClient([text_msg(draft())])
+    review(SEGMENT, client, variant="C")
+    user = json.loads(client.calls[0]["messages"][-1]["content"])
+    assert "tool_results" in user
+    assert user["tool_results"]["check_placeholders"]
+
+
+def test_variant_c_plain_segment_gets_no_prefill():
+    plain = Segment(segment_id="t2", source="Save the file.", mt="Salve o arquivo.")
+    client = FakeClient([text_msg(draft())])
+    review(plain, client, variant="C")
+    user = json.loads(client.calls[0]["messages"][-1]["content"])
+    assert "tool_results" not in user
+
+
+def test_json_mode_requested_on_final_calls():
+    client = FakeClient([text_msg(draft())])
+    review(SEGMENT, client, variant="A")
+    assert client.calls[0]["json_mode"] is True
+
+
+def test_json_mode_only_after_tool_round():
+    call = tool_call_msg("check_placeholders", {"source": SEGMENT.source, "mt": SEGMENT.mt})
+    client = FakeClient([call, text_msg(draft())])
+    review(SEGMENT, client, variant="C")
+    assert client.calls[0]["json_mode"] is False
+    assert client.calls[1]["json_mode"] is True

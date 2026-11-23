@@ -1,5 +1,5 @@
 <!-- mt-qa-agent: src/mtqa/prompts/system.md
-prompt_version: v2   (bump on every edit; run_eval logs this as an MLflow param)
+prompt_version: v3   (bump on every edit; run_eval logs this as an MLflow param)
 
 Assemble per variant:
   A (LLM only):  BASE
@@ -78,7 +78,7 @@ You have three tools. Call the ones that are relevant to this segment before you
 - `check_placeholders(source, mt)` — placeholders, tags, numbers or URLs dropped, added or changed. Call it only when the source contains one; a plain sentence without variables needs no call.
 - `check_dialect_and_style(mt)` — returns records with `kind`: `lexicon` (European Portuguese word), `spacing`, `punctuation`, `capitalization`, `register` (vosso, inconsistent tu/você). Courtesy formulas and tone are not detected here.
 
-Pass `source`, `mt` and `glossary` exactly as given, unchanged. Make your calls in one round, then write the report; do not loop.
+Pass `source`, `mt` and `glossary` exactly as given, unchanged. Make your calls in one round, then write the report; do not loop. If the message already contains `tool_results`, those checks have run: do not call them again.
 
 Treat the results as facts and map them to findings exactly as follows: `check_glossary` gives terminology; `check_placeholders` gives accuracy, major for a dropped or altered placeholder and critical for a wrong number, amount, date or currency; `check_dialect_and_style` gives terminology when `kind` is `lexicon` and style when `kind` is `punctuation`, `spacing` or `register`.
 
