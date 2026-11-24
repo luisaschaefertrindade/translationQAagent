@@ -1,0 +1,137 @@
+[
+  {
+    "note": "Clean segment: a glossary check passed, so report nothing. Teaches the model not to invent problems.",
+    "input": {
+      "segment_id": "fs1",
+      "source": "Save your changes before logging out.",
+      "mt": "Salve as alterações antes de sair.",
+      "glossary": { "log out": "sair" }
+    },
+    "tool_results": {
+      "check_glossary": [{ "source_term": "log out", "expected": "sair", "found": true }],
+      "check_placeholders": [],
+      "check_dialect_and_style": []
+    },
+    "output": { "segment_id": "fs1", "findings": [] }
+  },
+  {
+    "note": "Two problems, two findings. The glossary miss and the PT-EU lexicon hit land on the same span, so they merge into ONE finding: the category follows the problem, not the check that reported it.",
+    "input": {
+      "segment_id": "fs2",
+      "source": "Tap Settings to change your mobile number.",
+      "mt": "Toque em Definições para alterar o seu número de telemóvel.",
+      "glossary": { "Settings": "Configurações", "mobile number": "número de celular" }
+    },
+    "tool_results": {
+      "check_glossary": [
+        { "source_term": "Settings", "expected": "Configurações", "found": false },
+        { "source_term": "mobile number", "expected": "número de celular", "found": false }
+      ],
+      "check_placeholders": [],
+      "check_dialect_and_style": [
+        { "marker": "telemóvel", "kind": "lexicon", "note": "European Portuguese word" }
+      ]
+    },
+    "output": {
+      "segment_id": "fs2",
+      "findings": [
+        {
+          "category": "terminology",
+          "severity": "moderate",
+          "span": "Definições",
+          "comment": "Glossary requires 'Configurações' for 'Settings'."
+        },
+        {
+          "category": "terminology",
+          "severity": "moderate",
+          "span": "número de telemóvel",
+          "comment": "PT-EU word; glossary and PT-BR both expect 'número de celular'."
+        }
+      ]
+    }
+  },
+  {
+    "note": "Dropped placeholder and dropped quantity: one tool result per finding, both accuracy/major.",
+    "input": {
+      "segment_id": "fs3",
+      "source": "Select at least 2 items. The {0} button is then enabled.",
+      "mt": "Selecione os itens. O botão é então ativado.",
+      "glossary": {}
+    },
+    "tool_results": {
+      "check_glossary": [],
+      "check_placeholders": [
+        { "kind": "dropped", "token": "{0}" },
+        { "kind": "dropped", "token": "2" }
+      ],
+      "check_dialect_and_style": []
+    },
+    "output": {
+      "segment_id": "fs3",
+      "findings": [
+        {
+          "category": "accuracy",
+          "severity": "major",
+          "span": "Selecione os itens",
+          "comment": "'At least 2' is omitted, so the selection requirement is lost."
+        },
+        {
+          "category": "accuracy",
+          "severity": "major",
+          "span": "{0}",
+          "comment": "Placeholder {0} is missing from the translation."
+        }
+      ]
+    }
+  },
+  {
+    "note": "Fluency: a grammar problem no check can see. Tools return nothing and the model still reports it.",
+    "input": {
+      "segment_id": "fs4",
+      "source": "Only managers can approve this request.",
+      "mt": "Somente os gerentes pode aprovar esta solicitação.",
+      "glossary": { "request": "solicitação" }
+    },
+    "tool_results": {
+      "check_glossary": [],
+      "check_placeholders": [],
+      "check_dialect_and_style": []
+    },
+    "output": {
+      "segment_id": "fs4",
+      "findings": [
+        {
+          "category": "fluency",
+          "severity": "major",
+          "span": "os gerentes pode",
+          "comment": "Subject-verb disagreement: plural subject with singular verb."
+        }
+      ]
+    }
+  },
+  {
+    "note": "Style: courtesy formula added where PT-BR UI copy omits it. Model-only judgment; checks do not detect politeness.",
+    "input": {
+      "segment_id": "fs5",
+      "source": "Enter your password to continue.",
+      "mt": "Por favor, insira sua senha para continuar.",
+      "glossary": { "password": "senha" }
+    },
+    "tool_results": {
+      "check_glossary": [],
+      "check_placeholders": [],
+      "check_dialect_and_style": []
+    },
+    "output": {
+      "segment_id": "fs5",
+      "findings": [
+        {
+          "category": "style",
+          "severity": "minor",
+          "span": "Por favor,",
+          "comment": "Courtesy formula added; PT-BR UI copy omits it here."
+        }
+      ]
+    }
+  }
+]

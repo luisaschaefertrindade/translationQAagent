@@ -1,6 +1,6 @@
 # Translation QA Agent: Project Design
 
-A small, tested, tracked tool-calling agent that reviews an English to Brazilian Portuguese machine translation and returns a structured quality report. It targets the three fixable gaps for the SAP role: agentic design, production habits, and experiment tracking. Build window: Mon Nov 23 to Fri Nov 27.
+A small, tested, tracked tool-calling agent that reviews an English to Brazilian Portuguese machine translation and returns a structured quality report. Agentic design, production habits, and experiment tracking.
 
 ## 1. Goal and scope
 
@@ -84,7 +84,7 @@ Three variants, tracked as MLflow runs:
 
 Metrics per run: category-level precision, recall and F1 (a finding counts as matched when category matches within a segment); severity agreement within one level; JSON validity rate before retries; score MAE against gold scores; average latency.
 
-Log parameters (model, prompt version, variant), metrics, and the predictions file as an artifact. The comparison of A, B and C is your best interview story, whichever wins. If a local model cannot do tool calling reliably, say so and report that as a finding.
+Log parameters (model, prompt version, variant), metrics, and the predictions file as an artifact. The comparison of A, B and C is your best finding, whichever wins. If a local model cannot do tool calling reliably, say so and report that as a finding.
 
 ## 7. Model setup
 
@@ -132,8 +132,7 @@ Cut in this order: Docker, the style and dialect tool, the eval set down to 30 s
 - [ ] Agent returns validated JSON for all 40 segments
 - [ ] Three variants compared in MLflow with a results table in the README
 - [ ] Tests pass locally and in GitHub Actions
-- [ ] README explains the problem, design, results and limitations honestly
-- [ ] One CV bullet written from the real results
+- [ ] README explains the problem, design, results and limitations
 
 ## 12. Mapping to the week
 
@@ -143,6 +142,6 @@ Cut in this order: Docker, the style and dialect tool, the eval set down to 30 s
 - Thu: eval script, MLflow, variants A, B and C, short error analysis.
 - Fri: tests, CI, Docker, README, CV bullet, apply.
 
-## 13. How to describe it in an interview
+## 13. Describing it
 
-One sentence: "I built a tool-calling agent that reviews machine translations, with deterministic checks for glossary, placeholders and dialect, enforced structured output, and a tracked evaluation comparing three designs." Be ready to say what failed, since honest error analysis is what separates this from a tutorial.
+A tool-calling agent that reviews machine translations, with deterministic checks for glossary, placeholders and dialect, enforced structured output, and a tracked evaluation comparing three designs.
