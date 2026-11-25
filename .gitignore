@@ -7,6 +7,8 @@ build/
 .venv/
 venv/
 mlruns/
+mlflow.db
+predictions/
 .env
 *.log
 .DS_Store

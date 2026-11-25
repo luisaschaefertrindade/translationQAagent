@@ -59,13 +59,19 @@ two tools.
 
 ## Results
 
-_To be filled after the A/B/C runs (see `eval/run_eval.py`)._
+Qwen3-0.6B-GGUF served locally, full 40-segment split, 4 workers:
 
 | Variant | F1 | Strict F1 | Severity agree | Valid JSON | Score MAE | Latency |
-| --- | --- | --- | --- | --- | --- |
-| A (LLM only) | | | | | |
-| B (pipeline) | | | | | |
-| C (agent) | | | | | |
+| --- | --- | --- | --- | --- | --- | --- |
+| A (LLM only) | 0.145 | 0.145 | 1.000 | 1.000 | 5.100 | 47.4 s |
+| B (pipeline) | 0.421 | 0.214 | 0.917 | 0.975 | 4.538 | 48.1 s |
+| C (agent) | 0.321 | 0.107 | 0.889 | 0.975 | 4.667 | 54.1 s |
+
+Headline: deterministic results in the prompt (B) nearly triple F1 over A; the
+0.6B agent (C) regains some accuracy precision (0.714) and the only fluency
+findings (F1 0.222), but skips enough tool calls to lose terminology recall
+(0.300 vs 0.600 for B) — consistent with the probe's 50% autonomous tool-call
+rate. A's severity agreement of 1.000 is over very few caught findings.
 
 ## Limitations
 

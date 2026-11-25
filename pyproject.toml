@@ -15,7 +15,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-eval = ["mlflow>=2.10"]
+eval = ["mlflow>=2.10", "sqlalchemy>=2"]
 dev = ["pytest>=8"]
 
 [tool.hatch.build.targets.wheel]

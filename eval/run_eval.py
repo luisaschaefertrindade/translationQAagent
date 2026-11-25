@@ -15,6 +15,8 @@ import time
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
+import httpx
+
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
@@ -46,7 +48,7 @@ def run_one(client, variant: str, row: dict, segment: Segment) -> dict:
     started = time.perf_counter()
     try:
         report = agent_mod.review(segment, client, variant, drafts=drafts)
-    except agent_mod.AgentError as exc:
+    except (agent_mod.AgentError, httpx.HTTPError) as exc:
         return {
             "id": segment.segment_id,
             "gold": gold,
@@ -94,6 +96,7 @@ def main() -> None:
     parser.add_argument("--tracking-uri", default=None)
     parser.add_argument("--experiment", default=None)
     parser.add_argument("--workers", type=int, default=1, help="parallel requests per variant")
+    parser.add_argument("--timeout", type=float, default=120.0, help="per-request timeout in seconds")
     parser.add_argument(
         "--log-param",
         action="append",
@@ -124,7 +127,7 @@ def main() -> None:
         mlflow.set_tracking_uri(settings.tracking_uri)
         mlflow.set_experiment(settings.experiment)
 
-    client = OpenAICompatClient(base_url=settings.base_url, model=settings.model)
+    client = OpenAICompatClient(base_url=settings.base_url, model=settings.model, timeout=args.timeout)
     summary = {}
     for variant in [v.strip().upper() for v in args.variants.split(",") if v.strip()]:
         metrics, results = run_variant(client, variant, segments, workers=args.workers)
